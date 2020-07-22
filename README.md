@@ -25,4 +25,5 @@ My collection of python scripts to simulate electrochemical problems. Some of th
 
 ### Electrochemistry simulations
 * Backwards implicit method:
-  * RandCirc-BI_banded.py: Solves the Randles circuit for an E mechanism with scipy.linalg.solve_banded()
+  * BI_RandCirc.py: Solves the Randles circuit for an E mechanism with BI 
+  * BI_banded-RandCirc.py: Solves the Randles circuit for an E mechanism with scipy.linalg.solve_banded()
