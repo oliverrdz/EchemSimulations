@@ -26,7 +26,9 @@ Collection of python scripts to simulate electrochemical problems, some of these
 
 ### Electrochemistry simulations
 * Explicit finite differences:
-  * FD_E.py: Simulates an E mechanism with finite differences
+  * FD-E.py: Simulates an E mechanism with finite differences
 * Backwards implicit method:
-  * BI_RandCirc_E.py: Solves the Randles circuit for an E mechanism
-  * BI_banded-RandCirc_E.py: Solves the Randles circuit for an E mechanism with scipy.linalg.solve_banded()
+  * BI-ads.py: Surface bound species
+  * BI-ads_RandCirc.py: Surface bound species with the Randles circuit
+  * BI-E_RandCirc.py: Solves the Randles circuit for an E mechanism
+  * BI_banded-E_RandCirc.py: Solves the Randles circuit for an E mechanism with scipy.linalg.solve_banded()
