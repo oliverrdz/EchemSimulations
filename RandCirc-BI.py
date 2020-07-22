@@ -1,5 +1,6 @@
-#### Function that creates a potential sweep waveform
-'''
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
     Copyright (C) 2020 Oliver Rodriguez
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,22 +14,21 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-    Created on Wed Jul 22 10:07:18 2020
+    Created on Thu Jul 16 10:44:28 2020
     * R - e- -> O
     * Diffusion with Randless circuit
     * Butler Volmer
-    * Backwards implicit with banded matrix
+    * Backwards implicit
 
-    Simulation time: 2 s, with:
+    Simulation time: 122 s, with:
     * dE = 0.0001 (# time elements: 20K)
     * dX = 2e-3 (# distance elements: 3K)
 
     @author: oliverrdz
     https://oliverrdz.xyz
-'''
+"""
 
 import numpy as np
-from scipy.linalg import solve_banded
 import plots as p
 import waveforms as wf
 import time
@@ -88,44 +88,34 @@ a = -lamb
 b = 1 + 2*lamb
 g = -lamb
 
+g_mod = np.zeros(nX)
 C = np.ones([nT,nX]) # Initial condition for C
 V = np.zeros(nT+1)
 iF = np.zeros(nT)
 
-# Constructing ab to use in solve_banded:
-ab = np.zeros([3,nX])
-ab[0,2:] = g
-ab[1,:] = b
-ab[2,:-2] = a
-ab[1,0] = 1
-ab[1,-1] = 1
-
-# Initial condition for V
 V[0] = E[0]
 
 #%% Simulation
 for k in range(0,nT-1):
     eps = FRT*(V[k] - E0)
     
-    # Butler-Volmer:
-    b0 = -(1 +dX*K0*(np.exp((1-alpha)*eps) + np.exp(-alpha*eps)))
-    g0 = 1
+    g_mod[0] = 1/(-1 -dX*K0*(np.exp((1-alpha)*eps) + np.exp(-alpha*eps)))
+    C[k,0] = -dX*K0*np.exp(-alpha*eps)/(-1 -dX*K0*(np.exp((1-alpha)*eps) + np.exp(-alpha*eps)))
     
-    # Updating ab with the new values
-    ab[0,1] = g0
-    ab[1,0] = b0
+    for i in range(1,nX):
+        C[k,i] = (C[k,i] - C[k,i-1]*a)/(b - g_mod[i-1]*a)
+        g_mod[i] = g/(b - g_mod[i-1]*a)
     
-    #Boundary conditions:
-    C[k,0] = -dX*K0*np.exp(-alpha*eps)
-    C[k,-1] = 1
-    
-    C[k+1,:] = solve_banded((1,1), ab, C[k,:])
-    
-    # Obtaining faradaic current and solving voltage drop
-    iF[k] = n*F*Ageo*D*Cb*(-C[k+1,2] + 4*C[k+1,1] - 3*C[k+1,0])/(2*dX*delta)
+    C[k,nX-1] = 1 # Outer boundary condition
+    for i in range(nX-2,-1,-1):
+        C[k,i] = C[k,i] - g_mod[i]*C[k,i+1]
+
+    iF[k] = n*F*Ageo*D*Cb*(-C[k,2] + 4*C[k,1] - 3*C[k,0])/(2*dX*delta)
     V[k+1] = (V[k] + (t[1]/Cdl)*(E[k]/Ru -iF[k]))/(1 + t[1]/(Cdl*Ru))
-    
+    C[k+1,:] = C[k,:]
+
 i = (E-V[:-1])/Ru
+end = time.time()
 
 # Denormalising:
 c = C*Cb
