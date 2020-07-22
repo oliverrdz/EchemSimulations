@@ -19,7 +19,7 @@
     * Butler Volmer
     * Backwards implicit with banded matrix
 
-    Simulation time: 1.8 s, with:
+    Simulation time: 2 s, with:
     * dE = 0.0001
     * dX = 2e-3
 
@@ -43,13 +43,13 @@ FRT = F/(R*T)
 
 #%% Parameters
 
-n = 1
-Cb = 1e-6 # mol/cm3
-D = 1e-5 # cm2/s
-Ageo = 1 # cm2
-r = np.sqrt(Ageo/np.pi)
-ks = 1e-3 # cm/s
-alpha = 0.5
+n = 1 # number of electrons
+Cb = 1e-6 # mol/cm3, bulk concentration of R
+D = 1e-5 # cm2/s, diffusion coefficient of R
+Ageo = 1 # cm2, geometrical area
+r = np.sqrt(Ageo/np.pi) # cm, radius of electrode
+ks = 1e-3 # cm/s, standard rate constant
+alpha = 0.5 # transfer coefficient
 
 Rf = 5 # Roughness factor
 C = 20e-6 # F/cm2, specific capacitance
@@ -59,28 +59,28 @@ Cdl = Ageo*Rf*C # F, double layer capacitance
 Ru = x/(kapa*Ageo) # Ohms, solution resistance
 
 # Potential waveform
-E0 = 0 
-Eini = -0.5
-Efin = 0.5
-sr = 1
-ns = 2
-dE = 0.0001 # This value has to be small for BI to approximate the circuit properly
+E0 = 0  # V, standard potential
+Eini = -0.5 # V, initial potential
+Efin = 0.5 # V, final potential vertex
+sr = 1 # V/s, scan rate
+ns = 2 # number of sweeps
+dE = 0.0001 # V, potential increment. This value has to be small for BI to approximate the circuit properly
 
-t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns)
+t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns) # Creates waveform
 
 #%% Simulation parameters
+delta = np.sqrt(D*t[-1]) # cm, diffusion layer thickness
 maxT = 1 # Time normalised by total time
 dt = t[1] # t[1] - t[0]; t[0] = 0
-dT = dt/t[-1]
-nT = np.size(t)
+dT = dt/t[-1] # normalised time increment
+nT = np.size(t) # number of time elements
 
-maxX = 6*np.sqrt(maxT)
-dX = 2e-3
-nX = int(maxX/dX)
-X = np.linspace(0,maxX,nX)
-delta = np.sqrt(D*t[-1])
+maxX = 6*np.sqrt(maxT) # Normalised maximum distance
+dX = 2e-3 # normalised distance increment
+nX = int(maxX/dX) # number of distance elements
+X = np.linspace(0,maxX,nX) # normalised distance array
 
-K0 = ks*delta/D
+K0 = ks*delta/D # Normalised standard rate constant
 lamb = dT/dX**2
 
 # Thomas coefficients
@@ -88,8 +88,7 @@ a = -lamb
 b = 1 + 2*lamb
 g = -lamb
 
-g_mod = np.zeros(nX)
-C = np.ones(nX) # Initial condition for C
+C = np.ones([nT,nX]) # Initial condition for C
 V = np.zeros(nT+1)
 jF = np.zeros(nT)
 
@@ -105,7 +104,7 @@ ab[1,-1] = 1
 V[0] = E[0]
 
 #%% Simulation
-for k in range(0,nT):
+for k in range(0,nT-1):
     eps = FRT*(V[k] - E0)
     
     # Butler-Volmer:
@@ -117,18 +116,23 @@ for k in range(0,nT):
     ab[1,0] = b0
     
     #Boundary conditions:
-    C[0] = -dX*K0*np.exp(-alpha*eps)
-    C[-1] = 1
+    C[k,0] = -dX*K0*np.exp(-alpha*eps)
+    C[k,-1] = 1
     
-    C = solve_banded((1,1), ab, C)
+    C[k+1,:] = solve_banded((1,1), ab, C[k,:])
     
     # Obtaining faradaic current and solving voltage drop
-    jF[k] = n*F*Ageo*D*Cb*(-C[2] + 4*C[1] - 3*C[0])/(2*dX*delta)
+    jF[k] = n*F*Ageo*D*Cb*(-C[k+1,2] + 4*C[k+1,1] - 3*C[k+1,0])/(2*dX*delta)
     V[k+1] = (V[k] + (t[1]/Cdl)*(E[k]/Ru -jF[k]))/(1 + t[1]/(Cdl*Ru))
     
 i = (E-V[:-1])/Ru
+
+# Denormalising:
+c = C*Cb
+x = X*delta
 end = time.time()
 print(end-start)
 
 #%% Plot
 p.plot(E, i, "$E$ / V", "$i$ / A")
+p.plot(x, c[-1,:]*1e6, "x / cm", "c($t_{end}$,$x$=0) / mM")
