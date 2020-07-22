@@ -43,7 +43,7 @@ FRT = F/(R*T)
 #%% Parameters
 
 n = 1 # number of electrons
-Cb = 1e-6 # mol/cm3, bulk concentration of R
+cB = 1e-6 # mol/cm3, bulk concentration of R
 D = 1e-5 # cm2/s, diffusion coefficient of R
 Ageo = 1 # cm2, geometrical area
 r = np.sqrt(Ageo/np.pi) # cm, radius of electrode
@@ -121,17 +121,18 @@ for k in range(0,nT-1):
     C[k+1,:] = solve_banded((1,1), ab, C[k,:])
     
     # Obtaining faradaic current and solving voltage drop
-    iF[k] = n*F*Ageo*D*Cb*(-C[k+1,2] + 4*C[k+1,1] - 3*C[k+1,0])/(2*dX*delta)
+    iF[k] = n*F*Ageo*D*cB*(-C[k+1,2] + 4*C[k+1,1] - 3*C[k+1,0])/(2*dX*delta)
     V[k+1] = (V[k] + (t[1]/Cdl)*(E[k]/Ru -iF[k]))/(1 + t[1]/(Cdl*Ru))
     
 i = (E-V[:-1])/Ru
 
 # Denormalising:
-c = C*Cb
+cR = C*cB
+cO = cB - cR
 x = X*delta
 end = time.time()
 print(end-start)
 
 #%% Plot
 p.plot(E, i, "$E$ / V", "$i$ / A")
-p.plot(x, c[-1,:]*1e6, "x / cm", "c($t_{end}$,$x$=0) / mM")
+p.plot2(x, cR[-1,:]*1e6, x, cO[-1,:]*1e6, "[R]", "[O]", "x / cm", "c($t_{end}$,$x$=0) / mM")
