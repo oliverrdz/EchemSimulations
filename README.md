@@ -1,5 +1,5 @@
 # EchemScripts
-My collection of python scripts to simulate electrochemical problems. Some of these are (or will be) used in [Soft Potato](https://github.com/oliverrdz/SoftPotato). At the top of the scripts I added the total simulation time with specific parameters and with my setup (see below). In general, the simulation time goes backwards implicit banded < backwards implicit.
+My collection of python scripts to simulate electrochemical problems. Some of these are (or will be) used in [Soft Potato](https://github.com/oliverrdz/SoftPotato). At the top of the scripts I added the total simulation time with specific parameters and with my setup (see below). In general, the simulation time goes backwards implicit banded << backwards implicit.
 
 ### Assumptions
 * Cyclic voltammetry (chronoamperometry can be simulated by using the appropriate function from waveforms.py)
