@@ -114,7 +114,7 @@ for k in range(0,nT-1):
     ab[0,1] = g0
     ab[1,0] = b0
     
-    #Boundary conditions:
+    # Boundary conditions:
     C[k,0] = -dX*K0*np.exp(-alpha*eps)
     C[k,-1] = 1
     
