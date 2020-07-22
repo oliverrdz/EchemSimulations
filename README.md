@@ -22,7 +22,7 @@ Collection of python scripts to simulate electrochemical problems, some of these
 # List of scripts
 ### General scripts
 * waveforms.py: functions to generate potential waveforms (potential sweep, potential step, current step)
-* plots.py: plotting functions
+* plots.py: functions for easy plotting
 
 ### Electrochemistry simulations
 * Explicit finite differences:
