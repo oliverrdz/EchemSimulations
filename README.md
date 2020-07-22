@@ -20,7 +20,7 @@ Collection of python scripts to simulate electrochemical problems, some of these
 * Mem: 8 GB
 
 # List of scripts
-### General scripts
+### General
 * waveforms.py: functions to generate potential waveforms (potential sweep, potential step, current step)
 * plots.py: functions for easy plotting
 
