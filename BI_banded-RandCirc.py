@@ -1,4 +1,4 @@
-#### Function that creates a potential sweep waveform
+
 '''
     Copyright (C) 2020 Oliver Rodriguez
     This program is free software: you can redistribute it and/or modify
