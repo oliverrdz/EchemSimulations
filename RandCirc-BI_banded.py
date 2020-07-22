@@ -20,8 +20,8 @@
     * Backwards implicit with banded matrix
 
     Simulation time: 2 s, with:
-    * dE = 0.0001
-    * dX = 2e-3
+    * dE = 0.0001 (# time elements: 20K)
+    * dX = 2e-3 (# distance elements: 3K)
 
     @author: oliverrdz
     https://oliverrdz.xyz
