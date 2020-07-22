@@ -8,7 +8,12 @@ My collection of python scripts to simulate electrochemical problems. Some of th
 * Matplotlib
 
 # List of scripts
-All scripts simulate cyclic voltammetry, although changing it to chronoamperometry is easy by using the appropriate function from waveforms.py. Also, the Butler-Volmer mechanism is assumed unless explicitely stated.
+
+## Assumptions
+* Cyclic voltammetry (chronoamperometry can be simulated by using the appropriate function from waveforms.py)
+* Butler-Volmer kinetics unless otherwise stated
+* Oxidation: only R present in solution at t = 0.
+
 
 ### General scripts
 * waveforms.py: functions to generate potential waveforms (potential sweep, potential step, current step)
