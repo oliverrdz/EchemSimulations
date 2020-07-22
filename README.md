@@ -4,7 +4,7 @@ Collection of python scripts to simulate electrochemical problems, some of these
 ### Assumptions
 * Cyclic voltammetry (chronoamperometry can be simulated by using the appropriate function from waveforms.py)
 * Butler-Volmer kinetics unless otherwise stated
-* Oxidation: only R present in solution at t = 0
+* Oxidation: only R present at t = 0
 * Equal diffusion coefficients
 
 ### Requirements
