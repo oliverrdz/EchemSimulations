@@ -4,7 +4,8 @@ Collection of python scripts to simulate electrochemical problems, some of these
 ### Assumptions
 * Cyclic voltammetry (chronoamperometry can be simulated by using the appropriate function from waveforms.py)
 * Butler-Volmer kinetics unless otherwise stated
-* Oxidation: only R present in solution at t = 0.
+* Oxidation: only R present in solution at t = 0
+* Equal diffusion coefficients
 
 ### Requirements
 * Python 3
@@ -24,6 +25,8 @@ Collection of python scripts to simulate electrochemical problems, some of these
 * plots.py: plotting functions
 
 ### Electrochemistry simulations
+* Explicit finite differences:
+  * FD_E.py: Simulates E mechanism with finite differences
 * Backwards implicit method:
   * BI_RandCirc.py: Solves the Randles circuit for an E mechanism with BI 
   * BI_banded-RandCirc.py: Solves the Randles circuit for an E mechanism with scipy.linalg.solve_banded()
