@@ -1,5 +1,5 @@
 # EchemScripts
-My collection of python scripts to simulate electrochemical problems. Some of these are (or will be) used in Soft Potato.
+My collection of python scripts to simulate electrochemical problems. Some of these are (or will be) used in [Soft Potato](https://github.com/oliverrdz/SoftPotato).
 
 ### Assumptions
 * Cyclic voltammetry (chronoamperometry can be simulated by using the appropriate function from waveforms.py)
