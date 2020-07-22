@@ -1,5 +1,5 @@
 # EchemScripts
-Collection of python scripts to simulate electrochemical problems, some of these are (or will be) used in [Soft Potato](https://github.com/oliverrdz/SoftPotato). At the top of the scripts I added the total simulation time with specific parameters and with my setup (see below). In general, the simulation time goes backwards implicit banded << backwards implicit.
+Collection of python scripts to simulate electrochemical problems, some of these are (or will be) used in [Soft Potato](https://github.com/oliverrdz/SoftPotato). At the top of the scripts I added the total simulation time with specific parameters and with my setup (see below). In general, the simulation time goes: backwards implicit banded << backwards implicit << explicit finite differences. For learning purposes I recommend using the explicit finite differences scheme, while for more advanced users, the backwards implicit method banded should be used. In all cases, the current is approximated with three points, as opposed to the generally used 2-point approximation.
 
 ### Assumptions
 * Cyclic voltammetry (chronoamperometry can be simulated by using the appropriate function from waveforms.py)
@@ -26,7 +26,7 @@ Collection of python scripts to simulate electrochemical problems, some of these
 
 ### Electrochemistry simulations
 * Explicit finite differences:
-  * FD_E.py: Simulates E mechanism with finite differences
+  * FD_E.py: Simulates an E mechanism with finite differences
 * Backwards implicit method:
-  * BI_RandCirc.py: Solves the Randles circuit for an E mechanism with BI 
-  * BI_banded-RandCirc.py: Solves the Randles circuit for an E mechanism with scipy.linalg.solve_banded()
+  * BI_RandCirc_E.py: Solves the Randles circuit for an E mechanism with BI 
+  * BI_banded-RandCirc_E.py: Solves the Randles circuit for an E mechanism with scipy.linalg.solve_banded()
