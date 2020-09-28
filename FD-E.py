@@ -54,7 +54,7 @@ Eini = -0.5 # V, initial potential
 Efin = 0.5 # V, final potential vertex
 sr = 1 # V/s, scan rate
 ns = 2 # number of sweeps
-dE = 0.001 # V, potential increment. This value has to be small for BI to approximate the circuit properly
+dE = 0.01 # V, potential increment. This value has to be small for BI to approximate the circuit properly
 
 t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns) # Creates waveform
 
