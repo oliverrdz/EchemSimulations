@@ -38,8 +38,8 @@ class Construct:
 
     def __init__(self, wf):
         n = len(wf)
-        t = np.array([wf[0].t[-1]])
-        E = np.array([wf[0].E[-1]])
+        t = np.array([wf[0].t[0]])
+        E = np.array([wf[0].E[0]])
 
         for i in range(n):
             t = np.concatenate([t,wf[i].t+t[-1]])
