@@ -40,6 +40,7 @@ class Construct:
         n = len(wf)
         t = np.array([wf[0].t[-1]])
         E = np.array([wf[0].E[-1]])
+
         for i in range(n):
             t = np.concatenate([t,wf[i].t+t[-1]])
             E = np.concatenate([E,wf[i].E])
