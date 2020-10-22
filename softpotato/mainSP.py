@@ -5,10 +5,6 @@ import simulation as sim
 import matplotlib.pyplot as plt
 
 ## Create waveform object
-step = wf.Step(Estep=0, ttot=2)
-swp1 = wf.Sweep(Eini=step.E[-1], Efin=0.5, dE=0.005, ns=1)
-swp2 = wf.Sweep(Eini=swp1.E[-1], Efin=-0.5, dE=0.005, ns=1)
-swp3 = wf.Sweep(Eini=swp2.E[-1], Efin=0.5, dE=0.005, ns=2)
 swp = wf.Sweep(Eini=-0.5, Efin=0.5, dE=0.005, ns=4)
 wf1 = wf.Construct([swp])
 
