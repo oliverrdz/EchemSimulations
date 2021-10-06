@@ -17,10 +17,6 @@
     * Butler Volmer
     * Runge Kutta 4
 
-    Simulation time: 16 s, with:
-    * dE = 0.001 (# time elements: 2K)
-    * dX (fixed) = 0.033 (# distance elements: 5.4K)
-
     @author: oliverrdz
     https://oliverrdz.xyz
 '''
@@ -73,15 +69,20 @@ eps = (E-E0)*n*FRT # adimensional potential waveform
 delta = np.sqrt(D*t[-1]) # cm, diffusion layer thickness
 K0 = ks*delta/D # Normalised standard rate constant
 
-def Emech(Ca, Cp, Cb): # Cafter, Cpresent, Cbefore
-    return Ca - 2*Cp + Cb
 
-def RK4(h, Ca, Cp, Cb, fun):
-    k1 = fun(Ca, Cp, Cb)
-    k2 = fun(Ca, Cp+h*k1/2, Cb)
-    k3 = fun(Ca, Cp+h*k2/2, Cb)
-    k4 = fun(Ca, Cp+h*k3, Cb)
-    return Cp + (h/6)*(k1 + 2*k2 + 2*k3 + k4)
+k1 = 1e-1
+K = k1*delta/D
+
+def Emech(Ca, Cp, Cb, dT, lamb): # Cafter, Cpresent, Cbefore
+    return lamb*(Ca - 2*Cp + Cb)/dT 
+
+
+def RK4(Ca, Cp, Cb, dT, lamb, fun):
+    k1 = fun(Ca, Cp, Cb, dT, lamb)
+    k2 = fun(Ca, Cp+dT*k1/2, Cb, dT, lamb)
+    k3 = fun(Ca, Cp+dT*k2/2, Cb, dT, lamb)
+    k4 = fun(Ca, Cp+dT*k3, Cb, dT, lamb)
+    return Cp + (dT/6)*(k1 + 2*k2 + 2*k3 + k4)
 
 #%% Simulation
 for k in range(1,nT):
@@ -90,7 +91,7 @@ for k in range(1,nT):
     
     # Solving with Runge Kutta 4:
     for j in range(1,nX-1):
-        C[k,j] = RK4(dX, C[k-1,j-1], C[k-1,j], C[k-1,j+1], Emech)
+        C[k,j] = RK4(C[k-1,j-1], C[k-1,j], C[k-1,j+1], dT, lamb, Emech)
 
 # Denormalising:
 i = n*F*Ageo*D*cB*(-C[:,2] + 4*C[:,1] - 3*C[:,0])/(2*dX*delta)
