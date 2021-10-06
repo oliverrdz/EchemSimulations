@@ -15,7 +15,7 @@
     * R - e- -> O
     * Diffusion, E mechanism
     * Butler Volmer
-    * Explicit finite differences
+    * Runge Kutta 4
 
     Simulation time: 16 s, with:
     * dE = 0.001 (# time elements: 2K)
