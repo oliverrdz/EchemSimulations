@@ -98,10 +98,10 @@ for k in range(1,nT):
     for j in range(1,nX-1):
         paramsE = [CR[k-1,j+1], CR[k-1,j-1], dT]
         paramsECneg = [CO[k-1,j+1], CO[k-1,j-1], CO[k-1,j], dT, Kc, DOR, -1]
-        #paramsECpos = [CP[k-1,j+1], CP[k-1,j-1], CO[k-1,j], dT, Kc, DPR, +1]
+        paramsECpos = [CP[k-1,j+1], CP[k-1,j-1], CO[k-1,j], dT, Kc, DPR, +1]
         CR[k,j] = RK4(CR[k-1,j], paramsE, Emech)
         CO[k,j] = RK4(CO[k-1,j], paramsECneg, ECmech)
-        #CP[k,j] = RK4(CP[k-1,j], paramsECpos, ECmech)
+        CP[k,j] = RK4(CP[k-1,j], paramsECpos, ECmech)
 
 # Denormalising:
 if cRb:
