@@ -17,11 +17,11 @@ cOb=0
 cRb=1e-6
 DO=1e-5
 DR=1e-5
-ks=1e-3
+ks=1e8
 alpha=0.5
 
 DY = 1e-5
-k1 = 1e-1 # less tan 1e-1 to converge
+k1 = 1e-8 # less tan 1e-1 to converge
 
 # Potential waveform
 E0 = 0  # V, standard potential
@@ -72,8 +72,10 @@ for k in range(1,nT):
     # Solving finite differences:
     for j in range(1,nX-1):
         CR[k,j] = CR[k-1,j] + lamb*(CR[k-1,j+1] - 2*CR[k-1,j] + CR[k-1,j-1])
-        CO[k,j] = CO[k-1,j] + DOR*lamb*(CO[k-1,j+1] - 2*CO[k-1,j] + CO[k-1,j-1]) - dT*K1*CO[k-1,j]
-        CY[k,j] = CY[k-1,j] + DYR*lamb*(CY[k-1,j+1] - 2*CY[k-1,j] + CY[k-1,j-1]) + dT*K1*CO[k-1,j]
+        CO[k,j] = CO[k-1,j] + DOR*lamb*(CO[k-1,j+1] - 2*CO[k-1,j] + CO[k-1,j-1]) - \
+                  dT*K1*CO[k-1,j] #+ dT*K1*CY[k-1,j]
+        CY[k,j] = CY[k-1,j] + DYR*lamb*(CY[k-1,j+1] - 2*CY[k-1,j] + CY[k-1,j-1]) + \
+                  dT*K1*CO[k-1,j] #- dT*K1*CO[k-1,j]
 
 # Denormalising:
 if cRb:
