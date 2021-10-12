@@ -38,7 +38,7 @@ FRT = F/(R*T)
 #%% Parameters
 
 n = 1 # number of electrons
-cOb = 0
+cOb = 1e-6 
 cRb = 1e-6 # mol/cm3, bulk concentration of R
 DO = 1e-5 # cm2/s, diffusion coefficient of R
 DR = 1e-5
@@ -86,8 +86,9 @@ R = diags([Cb,Cp,Ca], [-1,0,1]).toarray()/(dX**2)
 R[0,:] = np.zeros(nX)
 R[0,0] = 1 # Initial condition
 O = DOR*diags([Cb,Cp,Ca], [-1,0,1]).toarray()/(dX**2)
-R[0,:] = np.zeros(nX) # Initial condition
-print(np.shape(O))
+O[0,:] = np.zeros(nX) # Initial condition
+O[0,0] = 1
+print(O[0,0])
 
 def RK4(y, A):
     k1 = fun(y, A)
@@ -106,7 +107,8 @@ for k in range(1,nT):
     CR1kb = CR[k-1,1]
     CO1kb = CO[k-1,1]
 
-    CR[k,0] = (CR1kb + dX*K0*np.exp(-alpha*eps[k]))/(1+dX*K0*(np.exp((1-alpha)*eps[k])+np.exp(-alpha*eps[k])))
+    CR[k,0] = (CR1kb + dX*K0*np.exp(-alpha*eps[k])*(CO1kb + CR1kb/DOR))/(
+               1 + dX*K0*(np.exp((1-alpha)*eps[k]) + np.exp(-alpha*eps[k])/DOR))
     CO[k,0] = CO1kb + (CR1kb - CR[k,0])/DOR
 
     CR[k,1:-1] = RK4(CR[k-1,:], R)[1:-1]

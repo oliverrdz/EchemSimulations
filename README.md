@@ -29,7 +29,7 @@ Collection of python scripts to simulate electrochemical problems, some of these
   * FD-ECIrrev_ORY.py: Simulates an EC mechanism with finite differences with O and R in solution
 * Runge-Kutta 4:
   * RK4-E.py: Simulates an E mechanism with Runge-Kutta 4 with only R in solution. Optimized with linear algebra.
-  * RK4-E_OR.py: Simulates an E mechanism with Runge-Kutta 4 with O and R in solution.
+  * RK4-E_OR.py: Simulates an E mechanism with Runge-Kutta 4 with O and R in solution. Optimized with linear algebra.
   * RK4-EC.py: Simulates an EC mechanism with Runge-Kutta 4 with O and R in solution.
 * Backwards implicit method:
   * BI-ads.py: Surface bound species
