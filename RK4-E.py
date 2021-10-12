@@ -22,6 +22,7 @@
 '''
 
 import numpy as np
+from scipy.sparse import diags
 import plots as p
 import waveforms as wf
 import time
@@ -69,30 +70,30 @@ eps = (E-E0)*n*FRT # adimensional potential waveform
 delta = np.sqrt(D*t[-1]) # cm, diffusion layer thickness
 K0 = ks*delta/D # Normalised standard rate constant
 
+Cb = np.ones(nX-1) # Cbefore
+Cp = -2*np.ones(nX) # Cpresent
+Ca = np.ones(nX-1) # Cafter
+A = diags([Cb,Cp,Ca], [-1,0,1]).toarray()/(dX**2)
+A[0,:] = np.zeros(nX)
+A[0,0] = 1 # Initial condition
 
-k1 = 1e-1
-K = k1*delta/D
+def RK4(y):
+    k1 = fun(y)
+    k2 = fun(y+dT*k1/2)
+    k3 = fun(y+dT*k2/2)
+    k4 = fun(y+dT*k3)
+    return y + (dT/6)*(k1 + 2*k2 + 2*k3 + k4)
 
-def Emech(Ca, Cp, Cb, dT, lamb): # Cafter, Cpresent, Cbefore
-    return lamb*(Ca - 2*Cp + Cb)/dT 
-
-
-def RK4(Ca, Cp, Cb, dT, lamb, fun):
-    k1 = fun(Ca, Cp, Cb, dT, lamb)
-    k2 = fun(Ca, Cp+dT*k1/2, Cb, dT, lamb)
-    k3 = fun(Ca, Cp+dT*k2/2, Cb, dT, lamb)
-    k4 = fun(Ca, Cp+dT*k3, Cb, dT, lamb)
-    return Cp + (dT/6)*(k1 + 2*k2 + 2*k3 + k4)
+def fun(y):
+    return np.dot(A,y)
 
 #%% Simulation
 for k in range(1,nT):
+    #print(nT-k)
     # Boundary condition, Butler-Volmer:
     C[k,0] = (C[k-1,1] + dX*K0*np.exp(-alpha*eps[k]))/(1+dX*K0*(np.exp((1-alpha)*eps[k])+np.exp(-alpha*eps[k])))
-    
-    # Solving with Runge Kutta 4:
-    for j in range(1,nX-1):
-        C[k,j] = RK4(C[k-1,j-1], C[k-1,j], C[k-1,j+1], dT, lamb, Emech)
-
+    C[k,1:-1] = RK4(C[k-1,:])[1:-1]#, A[:-1,:-1])
+ 
 # Denormalising:
 i = n*F*Ageo*D*cB*(-C[:,2] + 4*C[:,1] - 3*C[:,0])/(2*dX*delta)
 cR = C*cB
