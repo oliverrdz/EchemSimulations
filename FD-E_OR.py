@@ -33,7 +33,7 @@ FRT = F/(R*T)
 
 n=1
 Ageo=1
-cOb=0
+cOb=1e-6
 cRb=1e-6
 DO=1e-5
 DR=1e-5
