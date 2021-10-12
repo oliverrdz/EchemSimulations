@@ -1,3 +1,26 @@
+'''
+    Copyright (C) 2020 Oliver Rodriguez
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    Created on Wed Jul 22 15:07:06 2020
+    * R - e- -> O
+    * Diffusion, E mechanism
+    * Butler Volmer
+    * Explicit finite differences
+
+    @author: oliverrdz
+    https://oliverrdz.xyz
+'''
+
 import numpy as np
 import plots as p
 import waveforms as wf
@@ -23,7 +46,7 @@ Eini = -0.5 # V, initial potential
 Efin = 0.5 # V, final potential vertex
 sr = 1 # V/s, scan rate
 ns = 2 # number of sweeps
-dE = 0.005 # V, potential increment. This value has to be small for BI to approximate the circuit properly
+dE = 0.01 # V, potential increment. This value has to be small for BI to approximate the circuit properly
 
 t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns)
 
