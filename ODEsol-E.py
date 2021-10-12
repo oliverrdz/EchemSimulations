@@ -83,9 +83,10 @@ def fun(t,y):
 
 #%% Simulation
 for k in range(1,nT):
+    #print(nT-k)
     # Boundary condition, Butler-Volmer:
     C[k,0] = (C[k-1,1] + dX*K0*np.exp(-alpha*eps[k]))/(1+dX*K0*(np.exp((1-alpha)*eps[k])+np.exp(-alpha*eps[k])))
-    sol = solve_ivp(fun, [0,dT], C[k-1,:], t_eval=[dT])
+    sol = solve_ivp(fun, [0,dT], C[k-1,:], t_eval=[dT], method='RK45')
     C[k,1:-1] = sol.y[1:-1,0]
     
 # Denormalising:
