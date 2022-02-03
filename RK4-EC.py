@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import diags
 import plots as p
 import waveforms as wf
 import time
@@ -77,13 +78,34 @@ def ECmech(Cp, params):
     s = params[6] # sign of the chemical step
     return D*lamb*(Ca - 2*Cp + Cb)/dT - dT*K*Cp
 
-def RK4(Cp, params, mech):
+def RK4_before(Cp, params, mech):
     #dT = params[3]
     k1 = mech(Cp, params)
     k2 = mech(Cp+dT*k1/2, params)
     k3 = mech(Cp+dT*k2/2, params)
     k4 = mech(Cp+dT*k3, params)
     return Cp + (dT/6)*(k1 + 2*k2 + 2*k3 + k4)
+
+Cb = np.ones(nX-1) # Cbefore
+Cp = -2*np.ones(nX) # Cpresent
+Ca = np.ones(nX-1) # Cafter
+A = diags([Cb,Cp,Ca], [-1,0,1]).toarray()/(dX**2) # - dT*K*Cp
+A[0,:] = np.zeros(nX)
+A[0,0] = 1 # Initial condition
+print(A)
+
+def fun(y, mech='E'):
+    if mech == 'E':
+        return np.dot(A,y) 
+    else:
+        return np.dot(A,y) - dT*Kc*y
+
+def RK4(y, mech):
+    k1 = fun(y, mech)
+    k2 = fun(y+dT*k1/2, mech)
+    k3 = fun(y+dT*k2/2, mech)
+    k4 = fun(y+dT*k3, mech)
+    return y + (dT/6)*(k1 + 2*k2 + 2*k3 + k4)
 
 #%% Simulation
 for k in range(1,nT):
@@ -94,14 +116,17 @@ for k in range(1,nT):
                1 + dX*Ke*(np.exp((1-alpha)*eps[k]) + np.exp(-alpha*eps[k])/DOR))
     CO[k,0] = CO1kb + (CR1kb - CR[k,0])/DOR
     
+    CR[k,1:-1] = RK4(CR[k-1,:], 'E')[1:-1]
+    CO[k,1:-1] = RK4(CO[k-1,:], 'EC')[1:-1]
+
     # Solving with Runge Kutta 4:
-    for j in range(1,nX-1):
-        paramsE = [CR[k-1,j+1], CR[k-1,j-1], dT]
-        paramsECneg = [CO[k-1,j+1], CO[k-1,j-1], CO[k-1,j], dT, Kc, DOR, -1]
-        paramsECpos = [CP[k-1,j+1], CP[k-1,j-1], CO[k-1,j], dT, Kc, DPR, +1]
-        CR[k,j] = RK4(CR[k-1,j], paramsE, Emech)
-        CO[k,j] = RK4(CO[k-1,j], paramsECneg, ECmech)
-        CP[k,j] = RK4(CP[k-1,j], paramsECpos, ECmech)
+    #for j in range(1,nX-1):
+        #paramsE = [CR[k-1,j+1], CR[k-1,j-1], dT]
+        #paramsECneg = [CO[k-1,j+1], CO[k-1,j-1], CO[k-1,j], dT, Kc, DOR, -1]
+        #paramsECpos = [CP[k-1,j+1], CP[k-1,j-1], CO[k-1,j], dT, Kc, DPR, +1]
+        #CR[k,j] = RK4(CR[k-1,j], paramsE, Emech)
+        #CO[k,j] = RK4(CO[k-1,j], paramsECneg, ECmech)
+        #CP[k,j] = RK4(CP[k-1,j], paramsECpos, ECmech)
 
 # Denormalising:
 if cRb:
