@@ -35,7 +35,7 @@ dE = 0.005 # V, potential increment. This value has to be small for BI to approx
 t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns)
 
 DOR = DO/DR
-DPR = DP/DR
+#DPR = DP/DR
 
 #%% Simulation parameters
 nT = np.size(t) # number of time elements
