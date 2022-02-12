@@ -35,7 +35,7 @@ dE = 0.005 # V, potential increment. This value has to be small for BI to approx
 t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns)
 
 DOR = DO/DR
-DPR = DP/DR
+#DPR = DP/DR
 
 #%% Simulation parameters
 nT = np.size(t) # number of time elements
@@ -61,30 +61,6 @@ delta = np.sqrt(DR*t[-1]) # cm, diffusion layer thickness
 Ke = ks*delta/DR # Normalised standard rate constant
 Kc = kc*delta/DR
 
-
-def Emech(Cp, params):
-    Ca = params[0]
-    Cb = params[1]
-    #dT = params[2]
-    return lamb*(Ca - 2*Cp + Cb)/dT 
-
-def ECmech(Cp, params):
-    Ca = params[0]
-    Cb = params[1]
-    Cc = params[2]
-    #dT = params[3]
-    K = params[4]
-    D = params[5]
-    s = params[6] # sign of the chemical step
-    return D*lamb*(Ca - 2*Cp + Cb)/dT - dT*K*Cp
-
-def RK4_before(Cp, params, mech):
-    #dT = params[3]
-    k1 = mech(Cp, params)
-    k2 = mech(Cp+dT*k1/2, params)
-    k3 = mech(Cp+dT*k2/2, params)
-    k4 = mech(Cp+dT*k3, params)
-    return Cp + (dT/6)*(k1 + 2*k2 + 2*k3 + k4)
 
 Cb = np.ones(nX-1) # Cbefore
 Cp = -2*np.ones(nX) # Cpresent
@@ -115,18 +91,9 @@ for k in range(1,nT):
     CR[k,0] = (CR1kb + dX*Ke*np.exp(-alpha*eps[k])*(CO1kb + CR1kb/DOR))/(
                1 + dX*Ke*(np.exp((1-alpha)*eps[k]) + np.exp(-alpha*eps[k])/DOR))
     CO[k,0] = CO1kb + (CR1kb - CR[k,0])/DOR
-    
+    # Runge-Kutta 4:
     CR[k,1:-1] = RK4(CR[k-1,:], 'E')[1:-1]
     CO[k,1:-1] = RK4(CO[k-1,:], 'EC')[1:-1]
-
-    # Solving with Runge Kutta 4:
-    #for j in range(1,nX-1):
-        #paramsE = [CR[k-1,j+1], CR[k-1,j-1], dT]
-        #paramsECneg = [CO[k-1,j+1], CO[k-1,j-1], CO[k-1,j], dT, Kc, DOR, -1]
-        #paramsECpos = [CP[k-1,j+1], CP[k-1,j-1], CO[k-1,j], dT, Kc, DPR, +1]
-        #CR[k,j] = RK4(CR[k-1,j], paramsE, Emech)
-        #CO[k,j] = RK4(CO[k-1,j], paramsECneg, ECmech)
-        #CP[k,j] = RK4(CP[k-1,j], paramsECpos, ECmech)
 
 # Denormalising:
 if cRb:
