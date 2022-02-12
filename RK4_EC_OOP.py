@@ -84,28 +84,37 @@ class XGrid:
 class Simulate:
     '''
     '''
-    def __init__(self, species, tgrid, xgrid):
+    def __init__(self, species, mech, tgrid, xgrid):
         self.species = species
+        self.mech = mech
         self.tgrid = tgrid
         self.xgrid = xgrid
 
         self.join(species)
 
     def sim(self):
+        nE = self.nE[0]
+        nC = self.nC[0]
+        sE = self.species[nE]
+        sC = self.species[nC]
         for k in range(1, tgrid.nT):
-            for s in self.species:
-                if isinstance(s, E):
-                    # Boundary condition, Butler-Volmer:
-                    CR1kb = s.CR[k-1,1]
-                    CO1kb = s.CO[k-1,1]
-                    s.CR[k,0] = (CR1kb + xgrid.dX*s.Ke*np.exp(-s.alpha*s.eps[k]
-                                 )*(CO1kb + CR1kb/s.DOR))/(1 + xgrid.dX*s.Ke*(
-                                 np.exp((1-s.alpha)*s.eps[k])+np.exp(
-                                 -s.alpha*s.eps[k])/s.DOR))
-                    s.CO[k,0] = CO1kb + (CR1kb - s.CR[k,0])/s.DOR
-                    # Runge-Kutta 4:
-                    s.CR[k,1:-1] = self.RK4(s.CR[k-1,:], 'E', s)[1:-1]
-                    s.CO[k,1:-1] = self.RK4(s.CO[k-1,:], 'E', s)[1:-1]
+            #print(tgrid.nT-k)
+            # Boundary condition, Butler-Volmer:
+            CR1kb = sE.CR[k-1,1]
+            CO1kb = sE.CO[k-1,1]
+            sE.CR[k,0] = (CR1kb + xgrid.dX*sE.Ke*np.exp(-sE.alpha*sE.eps[k]
+                         )*(CO1kb + CR1kb/sE.DOR))/(1 + xgrid.dX*sE.Ke*(
+                         np.exp((1-sE.alpha)*sE.eps[k])+np.exp(
+                         -sE.alpha*sE.eps[k])/sE.DOR))
+            sE.CO[k,0] = CO1kb + (CR1kb - sE.CR[k,0])/sE.DOR
+            # Runge-Kutta 4:
+            sE.CR[k,1:-1] = self.RK4(sE.CR[k-1,:], 'E', sE)[1:-1]
+            if self.mech == 'E':
+                sE.CO[k,1:-1] = self.RK4(sE.CO[k-1,:], 'E', sE)[1:-1]
+            elif self.mech == 'EC':
+                sE.CO[k,1:-1] = self.RK4(sE.CO[k-1,:], 'EC', sE, sC)[1:-1]
+
+
         for s in self.species:
             if isinstance(s, E):
                 # Denormalising:
@@ -124,22 +133,32 @@ class Simulate:
                 self.x = self.xgrid.X*s.delta
 
     def join(self, species):
-        for s in species:
-            print(s)
+        ns = len(species)
+        self.nE = []
+        self.nC = []
+        for s in range(ns):
+            if isinstance(species[s], E):
+                self.nE.append(s)
+            elif isinstance(species[s], C):
+                self.nC.append(s)
 
+        if self.mech == 'EC':
+            species[self.nC[0]].Kc = species[self.nC[0]].kc* \
+                                     species[self.nE[0]].delta/ \
+                                     species[self.nE[0]].DR
 
-    def fun(self, y, mech, species):
-        if mech == 'E':
-            return np.dot(species.A,y) 
-        elif mech == 'EC':
-            return np.dot(species.A,y) - self.tgrid.dT*species.Kc*y
+    def fun(self, y, mech, species, params):
+        rate = 0
+        if mech == 'EC':
+            rate = - self.tgrid.dT*params.Kc*y
+        return np.dot(species.A, y) + rate
 
-    def RK4(self, y, mech, A):
+    def RK4(self, y, mech, species, params=0):
         dT = self.tgrid.dT
-        k1 = self.fun(y, mech, A)
-        k2 = self.fun(y+dT*k1/2, mech, A)
-        k3 = self.fun(y+dT*k2/2, mech, A)
-        k4 = self.fun(y+dT*k3, mech, A)
+        k1 = self.fun(y, mech, species, params)
+        k2 = self.fun(y+dT*k1/2, mech, species, params)
+        k3 = self.fun(y+dT*k2/2, mech, species, params)
+        k4 = self.fun(y+dT*k3, mech, species, params)
         return y + (dT/6)*(k1 + 2*k2 + 2*k3 + k4)
 
            
@@ -150,10 +169,10 @@ if __name__ == '__main__':
     import waveforms as wf
     import plots as p
     twf, Ewf = wf.sweep()
-    e = E(ks=1e-3)
-    c = C()
+    e = E()
+    c = C(kc=1e1)
     tgrid = TGrid(twf, Ewf)
     xgrid = XGrid([e,c], tgrid)
-    sim = Simulate([e,c], tgrid, xgrid)
+    sim = Simulate([e,c], 'EC', tgrid, xgrid)
     sim.sim()
     p.plot(Ewf, sim.i, xlab='$E$ / V', ylab='$i$ / A')
