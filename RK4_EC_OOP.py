@@ -32,6 +32,7 @@ class C:
         self.DP = DP
         self.cPb = cPb
         self.kc = kc
+        print(self.kc)
 
 
 class TGrid:
@@ -168,9 +169,10 @@ class Simulate:
 if __name__ == '__main__':
     import waveforms as wf
     import plots as p
-    twf, Ewf = wf.sweep()
+    kc = 0.159
+    twf, Ewf = wf.sweep(sr=0.01)
     e = E()
-    c = C(kc=1e1)
+    c = C(kc=kc)
     tgrid = TGrid(twf, Ewf)
     xgrid = XGrid([e,c], tgrid)
     sim = Simulate([e,c], 'EC', tgrid, xgrid)
