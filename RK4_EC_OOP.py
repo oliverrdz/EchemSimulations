@@ -113,6 +113,7 @@ class Simulate:
                 sE.CO[k,1:-1] = self.RK4(sE.CO[k-1,:], 'E', sE)[1:-1]
             elif self.mech == 'EC':
                 sE.CO[k,1:-1] = self.RK4(sE.CO[k-1,:], 'EC', sE, sC)[1:-1]
+                #sC.CP[k,1:-1] = self.RK4(sC.CP[k-1,:], 'EC', sC,
 
 
         for s in self.species:
@@ -168,11 +169,30 @@ class Simulate:
 if __name__ == '__main__':
     import waveforms as wf
     import plots as p
-    twf, Ewf = wf.sweep()
-    e = E()
-    c = C(kc=1e1)
-    tgrid = TGrid(twf, Ewf)
-    xgrid = XGrid([e,c], tgrid)
-    sim = Simulate([e,c], 'EC', tgrid, xgrid)
-    sim.sim()
-    p.plot(Ewf, sim.i, xlab='$E$ / V', ylab='$i$ / A')
+    import matplotlib.pyplot as plt
+
+    dE = 0.01
+    sr = np.array([0.01, 0.05, 0.1, 0.2, 0.5])
+    nsr = sr.size
+    kc = np.array([0.001, 0.01, 0.1, 1, 10])
+    nkc = kc.size
+    
+    for y in range(nkc):
+        e = E(ks=1e8)
+        c = C(kc=kc[y])
+            
+        isim = []
+       
+        for x in range(nsr):
+            print(nsr-x)
+            twf, Ewf = wf.sweep(dE=dE, sr=sr[x])
+            tgrid = TGrid(twf, Ewf)
+            xgrid = XGrid([e,c], tgrid)
+            sim = Simulate([e,c], 'EC', tgrid, xgrid)
+            sim.sim()
+            isim.append(sim.i)
+
+        data = np.concatenate((np.asarray([Ewf]), np.asarray(isim)), axis=0)
+        header = 'E, i. sr = 0.01, 0.05, 0.1, 0.2, 0.5 V/s'
+        #np.savetxt('data/kc_{:.3}.txt'.format(kc[y]), data.T, delimiter=',', header=header)
+        p.plot(Ewf, np.asarray(isim).T, xlab='$E$ / V', ylab='$i$ / A', fileName='data/kc_{:.3}.png'.format(kc[y]))
