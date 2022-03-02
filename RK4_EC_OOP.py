@@ -32,6 +32,7 @@ class C:
         self.DP = DP
         self.cPb = cPb
         self.kc = kc
+        print(self.kc)
 
 
 class TGrid:
@@ -196,3 +197,12 @@ if __name__ == '__main__':
         header = 'E, i. sr = 0.01, 0.05, 0.1, 0.2, 0.5 V/s'
         #np.savetxt('data/kc_{:.3}.txt'.format(kc[y]), data.T, delimiter=',', header=header)
         p.plot(Ewf, np.asarray(isim).T, xlab='$E$ / V', ylab='$i$ / A', fileName='data/kc_{:.3}.png'.format(kc[y]))
+    kc = 0.159
+    twf, Ewf = wf.sweep(sr=0.01)
+    e = E()
+    c = C(kc=kc)
+    tgrid = TGrid(twf, Ewf)
+    xgrid = XGrid([e,c], tgrid)
+    sim = Simulate([e,c], 'EC', tgrid, xgrid)
+    sim.sim()
+    p.plot(Ewf, sim.i, xlab='$E$ / V', ylab='$i$ / A')
