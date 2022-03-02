@@ -23,11 +23,13 @@ def plotFormat():
 	plt.grid()
 	plt.tight_layout()
 
-def plot(x, y, xlab, ylab, marker="-"):
+def plot(x, y, xlab, ylab, marker="-", fileName=0):
 	plt.plot(x, y, marker)
 	plt.xlabel(xlab, fontsize = 18)
 	plt.ylabel(ylab, fontsize = 18)
 	plotFormat()
+	if fileName:
+	        plt.savefig(fileName)
 	plt.show()
 
 def plot2(x1, y1, x2, y2, lab1, lab2, xlab, ylab, marker1="-", marker2 = "-", loc=1):
