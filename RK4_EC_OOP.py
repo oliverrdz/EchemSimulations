@@ -170,34 +170,9 @@ class Simulate:
 if __name__ == '__main__':
     import waveforms as wf
     import plots as p
-    import matplotlib.pyplot as plt
 
-    dE = 0.01
-    sr = np.array([0.01, 0.05, 0.1, 0.2, 0.5])
-    nsr = sr.size
-    kc = np.array([0.001, 0.01, 0.1, 1, 10])
-    nkc = kc.size
-    
-    for y in range(nkc):
-        e = E(ks=1e8)
-        c = C(kc=kc[y])
-            
-        isim = []
-       
-        for x in range(nsr):
-            print(nsr-x)
-            twf, Ewf = wf.sweep(dE=dE, sr=sr[x])
-            tgrid = TGrid(twf, Ewf)
-            xgrid = XGrid([e,c], tgrid)
-            sim = Simulate([e,c], 'EC', tgrid, xgrid)
-            sim.sim()
-            isim.append(sim.i)
-
-        data = np.concatenate((np.asarray([Ewf]), np.asarray(isim)), axis=0)
-        header = 'E, i. sr = 0.01, 0.05, 0.1, 0.2, 0.5 V/s'
-        #np.savetxt('data/kc_{:.3}.txt'.format(kc[y]), data.T, delimiter=',', header=header)
-        p.plot(Ewf, np.asarray(isim).T, xlab='$E$ / V', ylab='$i$ / A', fileName='data/kc_{:.3}.png'.format(kc[y]))
-    kc = 0.159
+    e = E(ks=1e8)
+    c = C(kc=kc[y])
     twf, Ewf = wf.sweep(sr=0.01)
     e = E()
     c = C(kc=kc)
