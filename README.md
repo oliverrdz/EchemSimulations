@@ -1,5 +1,5 @@
 # EchemScripts
-Collection of python scripts to simulate electrochemical problems, some of these are (or will be) used in [Soft Potato](https://oliverrdz.xyz/soft-potato). The current is approximated with three points, as opposed to the generally used 2-point approximation.
+Collection of python scripts to simulate electrochemical problems, some of these are (or will be) used in [Soft Potato](https://softpotato.xyz). The current is approximated with three points, as opposed to the generally used 2-point approximation.
 
 ### Assumptions
 * Cyclic voltammetry (chronoamperometry can be simulated by using the appropriate function from waveforms.py)
