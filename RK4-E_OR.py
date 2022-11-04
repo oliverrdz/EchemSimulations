@@ -38,21 +38,21 @@ FRT = F/(R*T)
 #%% Parameters
 
 n = 1 # number of electrons
-cOb = 1e-6 
+cOb = 0#1e-6 
 cRb = 1e-6 # mol/cm3, bulk concentration of R
-DO = 1e-5 # cm2/s, diffusion coefficient of R
-DR = 1e-5
-Ageo = 1 # cm2, geometrical area
-ks = 1e-3 # cm/s, standard rate constant
+DO = 3.25e-5#1e-5 # cm2/s, diffusion coefficient of R
+DR = 3.25e-5#1e-5
+Ageo = 0.03145 # cm2, geometrical area
+ks = 1e3 # cm/s, standard rate constant
 alpha = 0.5 # transfer coefficient
 
 # Potential waveform
 E0 = 0  # V, standard potential
 Eini = -0.5 # V, initial potential
 Efin = 0.5 # V, final potential vertex
-sr = 1 # V/s, scan rate
+sr = 0.1 # V/s, scan rate
 ns = 2 # number of sweeps
-dE = 0.01 # V, potential increment. This value has to be small for BI to approximate the circuit properly
+dE = 0.005 # V, potential increment. This value has to be small for BI to approximate the circuit properly
 DOR = DO/DR
 
 t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns) # Creates waveform
@@ -132,5 +132,5 @@ end = time.time()
 print(end-start)
 
 #%% Plot
-p.plot(E, i, "$E$ / V", "$i$ / A")
+p.plot(E, i*1e6, "$E$ / V", "$i$ / $\mu$A")
 

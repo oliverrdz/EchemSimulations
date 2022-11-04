@@ -32,11 +32,11 @@ T = 298 # K, Temperature
 FRT = F/(R*T)
 
 n=1
-Ageo=1
-cOb=1e-6
+Ageo = 0.0314
+cOb=0#1e-6
 cRb=1e-6
-DO=1e-5
-DR=1e-5
+DO=3.25e-5
+DR=3.25e-5
 ks=1e8
 alpha=0.5
 
@@ -44,7 +44,7 @@ alpha=0.5
 E0 = 0  # V, standard potential
 Eini = -0.5 # V, initial potential
 Efin = 0.5 # V, final potential vertex
-sr = 1 # V/s, scan rate
+sr = 0.1 # V/s, scan rate
 ns = 2 # number of sweeps
 dE = 0.01 # V, potential increment. This value has to be small for BI to approximate the circuit properly
 
@@ -104,4 +104,4 @@ cO = CO*cOb
 x = X*delta
 
 #%% Plot
-p.plot(E, i, "$E$ / V", "$i$ / A")
+p.plot(E, i*1e6, "$E$ / V", "$i$ / $\mu$A")

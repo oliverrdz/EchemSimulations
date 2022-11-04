@@ -22,10 +22,10 @@
 '''
 
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.sparse import diags
 from scipy.integrate import solve_ivp
-import plots as p
-import waveforms as wf
+import softpotato as sp
 import time
 
 start = time.time()
@@ -43,7 +43,7 @@ cB = 1e-6 # mol/cm3, bulk concentration of R
 D = 1e-5 # cm2/s, diffusion coefficient of R
 Ageo = 1 # cm2, geometrical area
 r = np.sqrt(Ageo/np.pi) # cm, radius of electrode
-ks = 1e-3 # cm/s, standard rate constant
+ks = 1e3 # cm/s, standard rate constant
 alpha = 0.5 # transfer coefficient
 
 # Potential waveform
@@ -52,9 +52,11 @@ Eini = -0.5 # V, initial potential
 Efin = 0.5 # V, final potential vertex
 sr = 1 # V/s, scan rate
 ns = 2 # number of sweeps
-dE = 0.01 # V, potential increment. This value has to be small for BI to approximate the circuit properly
+dE = 0.001 # V, potential increment. This value has to be small for BI to approximate the circuit properly
 
-t, E = wf.sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns) # Creates waveform
+wf = sp.technique.Sweep(Eini=Eini, Efin=Efin, dE=dE, sr=sr, ns=ns) # Creates waveform
+E = wf.E
+t = wf.t
 
 #%% Simulation parameters
 nT = np.size(t) # number of time elements
@@ -97,7 +99,16 @@ x = X*delta
 end = time.time()
 print(end-start)
 
+# Simulating with softpotato
+sim = sp.simulate.E(wf, n, Ageo, 0, 0, cB, D, D, ks, alpha)
+sim.run()
+
+# Randles Sevcik
+rs = sp.calculate.Macro(n, Ageo, cB, D)
+irs = rs.RandlesSevcik(np.array([sr]))*np.ones(E.size)
 #%% Plot
-p.plot(E, i, "$E$ / V", "$i$ / A")
-#p.plot(x, cR.T*1e6, '$x$ / cm', '$C$ / mM')
-#p.plot2(x, cR[0,:]*1e6, x, cO[0,:]*1e6, "[R]", "[O]", "x / cm", "c($t_{end}$,$x$=0) / mM")
+plt.figure(1)
+plt.plot(E, irs*1e3)
+plt.plot(E, i*1e3, label='RK4')
+plt.plot(E, sim.i*1e3, label='softpotato')
+sp.plotting.format(xlab='$E$ / V', ylab='$i$ / mA', legend=[1], show=1)
