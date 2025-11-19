@@ -16,6 +16,8 @@
 #### https://oliverrdz.xyz
 
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("TkAgg")
 
 def plotFormat():
 	plt.xticks(fontsize = 14)
