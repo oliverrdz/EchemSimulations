@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 if __name__=='__main__':
-    geoms = ['planar','spherical','thin_layer','rde']
+    geoms = ['planar','spherical','thin_layer','rde','cylindrical','microband','rce']
     results={}
     for g in geoms:
         s=PlanarDiffusionSolver(1e-5,1.0,1.0,method='explicit',geometry=g)

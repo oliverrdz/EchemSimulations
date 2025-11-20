@@ -1,7 +1,7 @@
 import numpy as np
 
 class Mesh1D:
-    """1D mesh for diffusion problems (planar, thin_layer, rde, spherical)."""
+    """1D mesh for diffusion problems (planar, thin_layer, rde, spherical, cylindrical, microband, rce)."""
 
     def __init__(self, L_m, NX, x0_m=0.0, grid_type="uniform",
                  stretch_factor=1.05, geometry="planar"):
