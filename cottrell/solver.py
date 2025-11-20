@@ -11,10 +11,17 @@ except ImportError:
 
 class PlanarDiffusionSolver:
     """
-    1D planar diffusion solver with multiple time-stepping schemes.
+    1D diffusion solver with multiple time-stepping schemes and
+    selectable geometry (planar or spherical radial).
 
-    PDE (dimensionless):
+    Dimensionless PDE (using X = (x - x0)/L, τ = D t / L^2):
+
+    - Planar:
         ∂c/∂τ = ∂²c/∂X²
+
+    - Spherical (radial, domain r ∈ [r0, r0 + L]):
+        ∂c/∂τ = ∂²c/∂X² + (2 L / r) ∂c/∂X
+        where r = x is the physical radial coordinate.
 
     User-facing units:
         - D in cm^2/s
@@ -44,6 +51,8 @@ class PlanarDiffusionSolver:
         grid_type="uniform",
         stretch_factor=1.05,
         method="explicit",         # "explicit", "rk2", "rk4", "implicit", "crank-nicolson", "solve_ivp"
+        geometry="planar",         # "planar" or "spherical"
+        r0_cm=0.01,                # Spherical electrode radius [cm]; used if geometry="spherical"
     ):
         """
         Parameters
@@ -64,17 +73,28 @@ class PlanarDiffusionSolver:
         n_elec : int
             Number of electrons for current.
         A_cm2 : float
-            Electrode area [cm^2].
+            Electrode area [cm^2] (planar geometry).
+            For spherical geometry, the area is taken as 4π r0^2, where
+            r0 is the electrode radius. A_cm2 is ignored in that case.
         grid_type : {"uniform", "expanding"}
             Type of spatial mesh.
         stretch_factor : float
             Geometric ratio for expanding grid (only used if grid_type="expanding").
         method : str
             Time integration method.
+        geometry : {"planar", "spherical"}
+            Diffusion geometry.
+        r0_cm : float
+            Electrode radius [cm] for spherical geometry. The radial
+            domain is [r0, r0 + L].
         """
 
         if lambda_value >= 0.5:
             raise ValueError("lambda_value must be < 0.5 for explicit schemes.")
+
+        self.geometry = geometry.lower()
+        if self.geometry not in ("planar", "spherical"):
+            raise ValueError("geometry must be 'planar' or 'spherical'")
 
         self.C_bulk_mM = C_bulk_mM
         self.t_final_s = t_final_s
@@ -86,6 +106,9 @@ class PlanarDiffusionSolver:
         self.grid_type = grid_type
         self.stretch_factor = stretch_factor
         self.F = 96485.0  # Faraday constant [C/mol]
+
+        # Spherical electrode radius (in meters)
+        self.r0_m = r0_cm * 1e-2
 
         self.method = method.lower()
         self._explicit_methods = ["explicit", "rk2", "rk4"]
@@ -104,12 +127,20 @@ class PlanarDiffusionSolver:
         self.delta_m = np.sqrt(self.D * t_final_s)
         L_m = 6 * self.delta_m
 
+        # Choose inner boundary depending on geometry
+        if self.geometry == "planar":
+            x0_m = 0.0
+        else:  # spherical
+            x0_m = self.r0_m
+
         # Create mesh object
         self.mesh = Mesh1D(
             L_m=L_m,
             NX=NX,
+            x0_m=x0_m,
             grid_type=grid_type,
             stretch_factor=stretch_factor,
+            geometry=self.geometry,
         )
 
         # Allocate arrays and compute number of time steps
@@ -123,7 +154,8 @@ class PlanarDiffusionSolver:
         Compute dimensionless time step dtau and number of time steps NT.
 
         Explicit methods:
-            - enforce classic stability dtau <= lambda * (min dX)^2.
+            - enforce classic stability dtau <= lambda * (min dX)^2
+              (based on the planar second-derivative term).
 
         Implicit / CN / solve_ivp:
             - no stability limit, but we still use the same dtau as a
@@ -153,9 +185,6 @@ class PlanarDiffusionSolver:
             return dtau, NT
 
         # dt_s not provided: choose dtau
-        # For simplicity, we use dtau_max for all methods as a
-        # reasonable resolution; explicit methods get a stable dtau,
-        # implicit/CN/solve_ivp simply inherit this resolution.
         dtau = dtau_max
         NT = int(tau_final / dtau) + 1
 
@@ -172,7 +201,7 @@ class PlanarDiffusionSolver:
         self.c = np.ones(self.NX)
         self.c_new = np.zeros(self.NX)
 
-        # Boundary conditions: c(0)=0, c(L)=1
+        # Boundary conditions: c(inner)=0, c(outer)=1
         self.c[0] = 0.0
         self.c[-1] = 1.0
 
@@ -181,7 +210,7 @@ class PlanarDiffusionSolver:
         self.c_history = np.zeros((NT, self.NX))
         self.c_history[0] = self.c.copy()
 
-        # Build discrete Laplacian matrix (for implicit / CN) once
+        # Build discrete operator matrix (for implicit / CN) once
         self._build_L_matrix()
 
     # ------------------------------------------------------------
@@ -189,8 +218,11 @@ class PlanarDiffusionSolver:
     # ------------------------------------------------------------
     def _laplacian(self, c):
         """
-        Compute ∂²c/∂X² on a non-uniform grid using second-order
-        finite differences.
+        Compute the right-hand side of the dimensionless PDE:
+            dc/dτ = L(c),
+        where L includes:
+            - planar second derivative in X
+            - optional spherical term for geometry="spherical".
 
         Parameters
         ----------
@@ -199,38 +231,59 @@ class PlanarDiffusionSolver:
 
         Returns
         -------
-        d2 : ndarray, shape (NX,)
-            Discrete Laplacian.
+        rhs : ndarray, shape (NX,)
+            Discrete RHS L(c).
         """
         X = self.mesh.X
+        x = self.mesh.x_m
+        L_m = self.mesh.L_m
+
         dX = np.diff(X)
         NX = self.NX
 
-        d2 = np.zeros_like(c)
+        rhs = np.zeros_like(c)
 
         for i in range(1, NX - 1):
             dX_L = dX[i - 1]
             dX_R = dX[i]
 
-            d2[i] = (
+            # Planar second derivative in X
+            second = (
                 2.0 / (dX_L + dX_R)
                 * ((c[i + 1] - c[i]) / dX_R
                    - (c[i] - c[i - 1]) / dX_L)
             )
 
+            if self.geometry == "spherical":
+                # First derivative in X (central difference)
+                first = (c[i + 1] - c[i - 1]) / (dX_L + dX_R)
+                r_i = x[i]
+                # Spherical term: (2 L / r) ∂c/∂X
+                second += 2.0 * L_m / r_i * first
+
+            rhs[i] = second
+
         # Boundaries: Dirichlet, no PDE applied
-        d2[0] = 0.0
-        d2[-1] = 0.0
-        return d2
+        rhs[0] = 0.0
+        rhs[-1] = 0.0
+        return rhs
 
     def _build_L_matrix(self):
         """
-        Build the full N x N discrete Laplacian matrix L such that:
+        Build the full N x N discrete operator matrix L such that:
 
-            (Lc)_i ≈ ∂²c/∂X² at node i (interior),
-            rows 0 and -1 are zero (BC enforced separately).
+            (L c)_i ≈ RHS of PDE at node i (interior),
+
+        i.e. L approximates:
+            ∂²c/∂X²          (planar)
+            ∂²c/∂X² + (2L/r) ∂c/∂X   (spherical)
+
+        Rows 0 and -1 are zero (BC enforced separately).
         """
         X = self.mesh.X
+        x = self.mesh.x_m
+        L_m = self.mesh.L_m
+
         dX = np.diff(X)
         N = self.NX
 
@@ -240,9 +293,18 @@ class PlanarDiffusionSolver:
             dX_L = dX[i - 1]
             dX_R = dX[i]
 
+            # Planar second derivative coefficients
             alpha = 2.0 / (dX_L * (dX_L + dX_R))
             gamma = 2.0 / (dX_R * (dX_L + dX_R))
             beta = -alpha - gamma
+
+            if self.geometry == "spherical":
+                r_i = x[i]
+                factor = 2.0 * L_m / r_i
+                # First derivative contribution: (2L/r) * (c_{i+1} - c_{i-1}) / (dX_L + dX_R)
+                alpha += -factor / (dX_L + dX_R)
+                gamma += +factor / (dX_L + dX_R)
+                # beta unchanged (no c_i contribution from first derivative)
 
             L[i, i - 1] = alpha
             L[i, i] = beta
@@ -284,28 +346,18 @@ class PlanarDiffusionSolver:
     # ------------------------------------------------------------
     def _solve_explicit(self):
         """
-        Explicit FD solution of ∂c/∂τ = ∂²c/∂X²
+        Explicit FD solution of the dimensionless PDE:
+            dc/dτ = L(c)
         on a possibly non-uniform X-grid.
         """
-        X = self.mesh.X
-        dX = np.diff(X)
-
         dtau = self._dtau
         NT = self.c_history.shape[0]
 
         for k in range(1, NT):
-            for i in range(1, self.NX - 1):
-                dX_left = dX[i - 1]
-                dX_right = dX[i]
+            rhs = self._laplacian(self.c)
+            self.c_new[:] = self.c + dtau * rhs
 
-                d2cdX2 = (
-                    2.0 / (dX_left + dX_right)
-                    * ((self.c[i + 1] - self.c[i]) / dX_right
-                       - (self.c[i] - self.c[i - 1]) / dX_left)
-                )
-
-                self.c_new[i] = self.c[i] + dtau * d2cdX2
-
+            # Dirichlet BC
             self.c_new[0] = 0.0
             self.c_new[-1] = 1.0
 
@@ -518,10 +570,18 @@ class PlanarDiffusionSolver:
     def _compute_current(self):
         """
         Compute Faradaic current:
-        i(t) = n F A (-D dC/dx)|_{x=0}
-        Using forward difference at the boundary.
+        i(t) = n F A (-D dC/dx)|_{x=inner boundary}
+
+        Using forward difference at the inner boundary.
+
+        - Planar: A is the user-provided planar electrode area.
+        - Spherical: A = 4π r0^2, where r0 is the electrode radius.
         """
-        A_m2 = self.A_cm2 * 1e-4
+        if self.geometry == "planar":
+            A_m2 = self.A_cm2 * 1e-4
+        else:  # spherical
+            A_m2 = 4.0 * np.pi * self.r0_m**2
+
         x = self.mesh.x_m
         dx0 = x[1] - x[0]
 
@@ -545,7 +605,7 @@ class PlanarDiffusionSolver:
         plt.xlabel("Position x [μm]")
         plt.ylabel("Concentration [mM]")
         plt.grid(True)
-        plt.title("Final Concentration Profile")
+        plt.title(f"Final Concentration Profile ({self.geometry})")
         plt.show()
 
     def plot_current(self):
@@ -556,5 +616,5 @@ class PlanarDiffusionSolver:
         plt.xlabel("Time [s]")
         plt.ylabel("Current [mA]")
         plt.grid(True)
-        plt.title("Diffusion-Limited Current")
+        plt.title(f"Diffusion-Limited Current ({self.geometry})")
         plt.show()
